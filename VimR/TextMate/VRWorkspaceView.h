@@ -57,6 +57,7 @@
 - (IBAction)toggleShowHiddenFiles:(NSMenuItem *)sender;
 - (IBAction)hideSidebar:(id)sender;
 - (IBAction)toggleSidebarOnRight:(id)sender;
-- (IBAction)showFileBrowser:(id)sender;
+- (IBAction)focusFileBrowser:(id)sender;
+- (IBAction)focusTextArea:(id)sender;
 
 @end

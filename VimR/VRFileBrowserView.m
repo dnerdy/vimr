@@ -96,6 +96,14 @@ static NSComparisonResult (^qNodeDirComparator)(NSNumber *, NSNumber *) =
   [self reload];
 }
 
+- (void)ensureSelection {
+  if (_fileOutlineView.numberOfRows > 0) {
+    if (!_fileOutlineView.selectedItem) {
+      [_fileOutlineView moveSelectionByDelta:1];
+    }
+  }
+}
+
 #pragma mark NSObject
 - (void)dealloc {
   [_notificationCenter removeObserver:self];

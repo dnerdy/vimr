@@ -120,20 +120,22 @@ static const int qMinimumFileBrowserWidth = 100;
   [self.mainWindowController forceRedrawVimView]; // Vim does not refresh the part in which the file browser was
 }
 
-- (IBAction)showFileBrowser:(id)sender {
-  if (_fileBrowserView) {
-    [self.window makeFirstResponder:_fileBrowserView.fileOutlineView];
-    return;
+- (IBAction)focusFileBrowser:(id)sender {
+  if (!_fileBrowserView) {
+    CGRect frame = self.window.frame;
+    if (frame.size.width <= _vimView.minSize.width) {
+      frame.size.width += self.defaultFileBrowserAndDividerWidth;
+      [self.window setFrame:frame display:YES];
+    }
+    self.fileBrowserView = _cachedFileBrowserView;
   }
+  
+  [self.fileBrowserView ensureSelection];
+  [self.window makeFirstResponder:_fileBrowserView.fileOutlineView];
+}
 
-  CGRect frame = self.window.frame;
-  if (frame.size.width <= _vimView.minSize.width) {
-    frame.size.width += self.defaultFileBrowserAndDividerWidth;
-    [self.window setFrame:frame display:YES];
-  }
-  self.fileBrowserView = _cachedFileBrowserView;
-
-  // We do not make the file browser the first responder, when the file browser was hidden and now gets shown
+- (IBAction)focusTextArea:(id)sender {
+  [self.window makeFirstResponder:_vimView.textView];
 }
 
 #pragma mark Public
@@ -195,7 +197,8 @@ static const int qMinimumFileBrowserWidth = 100;
 - (BOOL)validateUserInterfaceItem:(id <NSValidatedUserInterfaceItem>)anItem {
   SEL action = anItem.action;
 
-  if (action == @selector(showFileBrowser:)) {return YES;}
+  if (action == @selector(focusFileBrowser:)) {return YES;}
+  if (action == @selector(focusTextArea:)) {return YES;}
 
   if (action == @selector(hideSidebar:)) {return _fileBrowserView != nil;}
 

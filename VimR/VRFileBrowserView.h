@@ -49,6 +49,7 @@
 - (instancetype)initWithRootUrl:(NSURL *)rootUrl;
 - (void)setUp;
 - (void)reload;
+- (void)ensureSelection;
 
 #pragma mark NSOutlineViewDataSource
 - (NSInteger)outlineView:(NSOutlineView *)outlineView numberOfChildrenOfItem:(id)item;
