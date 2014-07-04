@@ -32,7 +32,6 @@ static NSComparisonResult (^qNodeDirComparator)(NSNumber *, NSNumber *) =
       }
     };
 
-
 @implementation VRNode
 
 - (NSString *)description {
@@ -55,6 +54,7 @@ static NSComparisonResult (^qNodeDirComparator)(NSNumber *, NSNumber *) =
 
   VRNode *_rootNode;
   NSMutableSet *_expandedUrls;
+  NSArray *_blacklistRegexes;
 }
 
 #pragma mark Public
@@ -72,8 +72,18 @@ static NSComparisonResult (^qNodeDirComparator)(NSNumber *, NSNumber *) =
   _invalidateCacheQueue.maxConcurrentOperationCount = 1;
 
   _expandedUrls = [[NSMutableSet alloc] initWithCapacity:40];
+  _blacklistRegexes = [self compileBlacklistRegexes];
 
   return self;
+}
+
+- (NSArray *)compileBlacklistRegexes {
+  NSArray *blacklistPatterns = @[@"^.*\\.swp$", @"^.*\\.swo", @"\\.DS_Store", @"^.*\\.pyc"];
+  NSMutableArray *result = [[NSMutableArray alloc] initWithCapacity:[blacklistPatterns count]];
+  for (NSString *pattern in blacklistPatterns) {
+    [result addObject:[NSRegularExpression regularExpressionWithPattern:pattern options:0 error:nil]];
+  }
+  return result;
 }
 
 - (void)reload {
@@ -306,6 +316,7 @@ static NSComparisonResult (^qNodeDirComparator)(NSNumber *, NSNumber *) =
   }
 
   NSArray *filteredChildren = [self filterHiddenNodesIfNec:children];
+  filteredChildren = [self filterBlacklistedNodes:filteredChildren];
   if (_workspaceView.showFoldersFirst) {
     NSSortDescriptor *folderDescriptor = [[NSSortDescriptor alloc] initWithKey:@"dir" ascending:YES
                                                                     comparator:qNodeDirComparator];
@@ -338,6 +349,25 @@ static NSComparisonResult (^qNodeDirComparator)(NSNumber *, NSNumber *) =
     }
   }
 
+  return result;
+}
+
+- (NSArray *)filterBlacklistedNodes:(NSArray *)nodes {
+  NSMutableArray *result = [[NSMutableArray alloc] initWithCapacity:nodes.count];
+  for (VRNode *item in nodes) {
+    BOOL blacklisted = NO;
+    for (NSRegularExpression *regex in _blacklistRegexes) {
+      NSArray *matches = [regex matchesInString:item.name options:0 range:NSMakeRange(0, [item.name length])];
+      if ([matches count]) {
+        blacklisted = YES;
+        DDLogDebug(@"Blacklisted: %@", item.name);
+        break;
+      }
+    }
+    if (!blacklisted) {
+      [result addObject:item];
+    }
+  }
   return result;
 }
 
